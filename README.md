@@ -1,36 +1,33 @@
 # AI-Driven GPU Scheduling Simulator
 
-Real-time simulation and visualization platform for GPU job scheduling in multi-tenant ML clusters.
+GPU scheduling simulator for multi-tenant ML workloads, with a live dashboard for queue state, GPU packing, and runtime metrics.
 
-This project compares baseline scheduling (`FIFO`) vs optimized packing (`smart`) and visualizes the impact on utilization, queue behavior, and throughput.
+## Overview
 
----
+The system models a shared GPU cluster where jobs have variable GPU demand, memory usage, and duration. It supports multiple schedulers and exposes live state to a web UI.
 
-## Features
+Primary goal: compare baseline scheduling (`fifo`) against an optimized packing strategy (`smart`) and observe utilization and throughput differences in real time.
+
+## Core Capabilities
 
 - Real-time job generation and queue simulation
-- Multiple scheduling strategies:
-  - `FIFO` (baseline)
-  - `smart` (optimized packing)
-- Live GPU cluster visualization
-- Live metrics dashboard:
+- Scheduler mode switching (`fifo` / `smart`)
+- GPU allocation visualization with packed job segments
+- Live metrics:
   - GPU utilization
   - average wait time
   - throughput
-  - completed and total jobs
-- Mode switching and simulation reset from UI
+  - completed jobs
+  - total generated jobs
+- Simulation reset from the dashboard
 
----
+## Technology
 
-## Tech Stack
+- Frontend: Next.js, TypeScript
+- Backend: FastAPI
+- Simulation engine: Python
 
-- **Frontend:** Next.js + TypeScript
-- **Backend:** FastAPI (Python)
-- **Simulation:** Custom Python engine
-
----
-
-## Project Structure
+## Repository Layout
 
 ```text
 gpu-scheduler-sim/
@@ -38,14 +35,9 @@ gpu-scheduler-sim/
 │   ├── app/
 │   │   ├── main.py
 │   │   ├── scheduler/
-│   │   │   ├── fifo.py
-│   │   │   └── smart.py
 │   │   ├── simulation/
-│   │   │   ├── engine.py
-│   │   │   ├── gpu.py
-│   │   │   └── job.py
-│   │   └── metrics/
-│   │       └── metrics.py
+│   │   ├── metrics/
+│   │   └── utils/
 │   └── requirements.txt
 ├── frontend/
 │   ├── app/
@@ -55,24 +47,20 @@ gpu-scheduler-sim/
 └── docs/
 ```
 
----
+## Execution Model
 
-## How It Works
+1. Jobs are generated with randomized resource requirements.
+2. Jobs are queued until schedulable on available GPUs.
+3. The selected scheduler assigns jobs to GPUs.
+4. The simulation advances in 1-second ticks.
+5. Metrics are recalculated from current state.
+6. Frontend polls backend and renders updates continuously.
 
-1. Jobs are generated with random GPU, memory, and duration requirements.
-2. Jobs enter the queue.
-3. Scheduler assigns jobs to GPUs using the selected mode.
-4. Simulation advances every second.
-5. Metrics are computed from current cluster state.
-6. Frontend polls backend and renders queue, GPUs, and metrics live.
+## Getting Started
 
----
+### Backend
 
-## Local Setup
-
-## 1) Backend
-
-From the `backend` folder:
+Run from `backend/`:
 
 ```bash
 python -m venv .venv
@@ -81,54 +69,43 @@ pip install -r requirements.txt
 uvicorn app.main:app --reload
 ```
 
-Backend runs at: `http://127.0.0.1:8000`
+Backend URL: `http://127.0.0.1:8000`
 
----
+### Frontend
 
-## 2) Frontend
-
-From the `frontend` folder:
+Run from `frontend/`:
 
 ```bash
 npm install
 npm run dev
 ```
 
-Frontend runs at: `http://localhost:3000`
+Frontend URL: `http://localhost:3000`
 
-Optional API override:
+Optional frontend environment override (`frontend/.env.local`):
 
 ```bash
-# frontend/.env.local
 NEXT_PUBLIC_API_BASE_URL=http://127.0.0.1:8000
 ```
 
----
+## API
 
-## API Endpoints
+- `GET /state` — returns queue, GPU state, metrics, and current mode
+- `POST /mode/{mode}` — sets scheduler mode (`fifo` or `smart`)
+- `POST /reset` — resets and restarts simulation state
 
-- `GET /state` → current queue, GPU allocation, metrics, mode
-- `POST /mode/{mode}` → set scheduler mode (`fifo` or `smart`)
-- `POST /reset` → reset simulation engine
+## Scheduler Modes
 
----
-
-## Current Scheduler Modes
-
-- **FIFO**: Places at most one queued job onto each empty GPU.
-- **Smart**: Attempts to pack as many fitting jobs as possible per GPU.
-
----
+- `fifo`: assigns at most one queued job to each empty GPU
+- `smart`: greedily packs all jobs that fit into each GPU
 
 ## Roadmap
 
-- Side-by-side dual simulation view (FIFO vs smart in parallel)
-- AI/ML-enhanced scheduler
-- Fairness metrics and user-level prioritization
-- Kubernetes and real cluster integration
-
----
+- Side-by-side parallel mode comparison
+- AI-assisted scheduling policies
+- Fairness and tenant-level policy controls
+- Kubernetes-oriented deployment support
 
 ## License
 
-For academic/demo use. Add a formal license file if you plan to distribute publicly.
+Currently unlicensed. All rights reserved.
